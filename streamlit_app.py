@@ -14,19 +14,17 @@ gc.enable()
 
 
 st.set_page_config(page_title="Digit Recognizer App", initial_sidebar_state="expanded")
-st.title('Digit Recognizer')
+st.title('Handwritten Digit Classifier')
 st.write("This is a simple image classification web app to **recognize the digit** drawn in the canvas.")
-st.markdown('### Draw a digit !')
+st.write('The MNIST application for handwritten digit classification is a classic example of machine learning applied to image recognition tasks. MNIST stands for Modified National Institute of Standards and Technology database, which is a large dataset of handwritten digits commonly used for training various machine learning models, particularly in the field of computer vision.')
+st.markdown('### Write a Digit:')
 
-
-st.sidebar.header("Configuration")
+st.sidebar.header("Brush Navigator")
 stroke_width = st.sidebar.slider("Brush width: ", 10, 30, 20)
-drawing_mode = st.sidebar.checkbox("Drawing mode ?", True)
 
 
 # To plot classes and probabilitites
 def plot_fig(df):
-
     fig = go.Figure(go.Bar(
     x=df[0].tolist(),
     y=list(df.index),
@@ -45,17 +43,16 @@ def plot_fig(df):
         xaxis_title="Probabilities",
         yaxis_title="Classes",
         font=dict(
-            family="Courier New, monospace",
+            family="Roboto",
             size=18,
-            # color="RebeccaPurple"
+            color="RebeccaPurple"
             ))
 
     st.plotly_chart(fig)
-
     del fig
 
 
-SIZE = 256
+SIZE = 300
 canvas_result = st_canvas(
     fill_color='#000000',
     stroke_width=stroke_width,
@@ -63,7 +60,6 @@ canvas_result = st_canvas(
     background_color='#000000',
     width=SIZE,
     height=SIZE,
-    drawing_mode="freedraw" if drawing_mode else "transform",
     key='canvas')
 
 if canvas_result.image_data is not None:
@@ -75,7 +71,6 @@ if canvas_result.image_data is not None:
     img = cv2.resize(canvas_result.image_data.astype('uint8'), (28, 28))
     # Rescaling the image just to view the model input clearly 
     rescaled = cv2.resize(img, (SIZE, SIZE), interpolation=cv2.INTER_NEAREST) 
-    st.write('`Model input (rescaled)`')
     st.image(rescaled)
 
 
@@ -89,24 +84,19 @@ if canvas_result.image_data is not None:
 
     if clicked:
 
-        with st.spinner(text='In progress'):
+        with st.spinner(text='Recognition in progress...'):
             image_transformed = transform_image(img_gray)
             class_label , confidence, probs = predict_image(image_transformed)
 
-        st.info('Run Successful !')
-
         if confidence > 50:
-            st.write('### `Prediction` : ', str(class_label))
-            st.write('### `Confidence` : {}%'.format(confidence)) 
-            st.write('&nbsp') # new line
+            st.write('## `Prediction` : ', str(class_label))
+            st.write('## `Confidence` : {}%'.format(confidence)) 
+            
             st.write('**Probabilities**')
             df = pd.DataFrame(probs.numpy())
             st.dataframe(df)
             df = df.transpose()
             plot_fig(df)
-
-           
-
             del img_gray, image_transformed , class_label, confidence, df 
 
         else:
